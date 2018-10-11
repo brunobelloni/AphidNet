@@ -1,5 +1,6 @@
 import glob
 import os
+import pickle
 import random
 
 import numpy as np
@@ -177,7 +178,14 @@ def read_images(path):
 path = 'flower_photos/'
 
 # A variável data irá receber as imagens presente na pasta especificada. Já a variável labels irá receber a classe de cada uma das imagens.
-data, labels = read_images(path)
+# data, labels = read_images(path)
+
+pickle_in = open('x.pickle', 'rb')
+data = pickle.load(pickle_in)
+
+pickle_in = open('y.pickle', 'rb')
+labels = pickle.load(pickle_in)
+labels = np.asarray(labels)
 
 # A variável batch_size representa o número de imagens que serão processadas a cada passo de treinamento.
 batch_size = 50
@@ -186,22 +194,18 @@ batch_size = 50
 epochs = 16
 
 # A variável percent contém a porcentagem de imagens que serão utilizadas para o treinamento.
-percent = 0.5
+percent = 0.8
 
 # Os códigos das próximas 5 linhas estão apenas embaralhando a ordem das imagens e dos labels.
 data_size = len(data)
-idx = np.arange(data_size)
-random.shuffle(idx)
-data = data[idx]
-labels = labels[idx]
+
+cut = int(data_size * percent)
 
 # Formando o conjunto de treinamento com a porcentagem de imagens especificado na variável percent.
-train = (data[0:np.int(data_size * percent), :, :],
-         labels[0:np.int(data_size * percent), :])
+train = (data[:cut], labels[:cut])
 
 # Formando o conjunto de teste com as imagens que não foram utilizadas no treinamento.
-test = (data[np.int(data_size * (1 - percent)):, :, :],
-        labels[np.int(data_size * (1 - percent)):, :])
+test = (data[cut:], labels[cut:])
 
 # A variável train_size contém o tamanho do conjunto de treinamento.
 train_size = len(train[0])
