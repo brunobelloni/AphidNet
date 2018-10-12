@@ -2,5 +2,7 @@ flower_photos
 __pycache__
 MNIST-data
 logs
-test.py
-iris.csv
+tests
+*.pickle
+*.h5
+*.json

@@ -1,3 +1,4 @@
+import os
 import pickle
 import time
 
@@ -11,23 +12,24 @@ from keras.utils.np_utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-name = 'flower-cnn-{}'.format(int(time.time()))
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+name = 'flower-cnn-{}'.format(int(time.time()))
 tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
 
-pickle_in = open("X.pickle", "rb")
-X = pickle.load(pickle_in)
+pickle_in = open("x.pickle", "rb")
+x = pickle.load(pickle_in)
 
 pickle_in = open("y.pickle", "rb")
-Y = pickle.load(pickle_in)
-Y = np.array(Y)
+y = pickle.load(pickle_in)
+y = np.array(y)
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, test_size=0.2, random_state=42)
+    x, y, test_size=0.2, random_state=42)
 
-epochs = 20
+epochs = 10
 num_classes = 5
-img_shape = X.shape[1:]
+img_shape = x.shape[1:]
 
 y_train = to_categorical(y_train, num_classes)
 y_test = to_categorical(y_test, num_classes)
@@ -89,7 +91,6 @@ model.add(Activation('softmax'))
 model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
 
 # fitting the model and predicting
 model.fit(X_train, y_train, epochs=epochs, callbacks=[tensorboard])
