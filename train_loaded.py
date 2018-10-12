@@ -1,18 +1,17 @@
+import os
 import pickle
 import time
 
 import numpy as np
 from keras.callbacks import TensorBoard
-from keras.layers import (Activation, BatchNormalization, Conv2D, Dense,
-                          Dropout, Flatten, MaxPooling2D, ZeroPadding2D)
-from keras.models import Sequential, model_from_json
-from keras.regularizers import l2
+from keras.models import load_model
 from keras.utils.np_utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-name = 'flower-cnn-{}'.format(int(time.time()))
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+name = 'flower-cnn-{}'.format(int(time.time()))
 tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
 
 pickle_in = open("X.pickle", "rb")
@@ -32,17 +31,7 @@ img_shape = X.shape[1:]
 y_train = to_categorical(y_train, num_classes)
 y_test = to_categorical(y_test, num_classes)
 
-# Defining the model
-model = Sequential()
-
-
-# load json and create model
-json_file = open('model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-model = model_from_json(loaded_model_json)
-# load weights into new model
-model.load_weights("model.h5")
+model = load_model('model.model')
 print("Loaded model from disk")
 
 model.compile(optimizer='adam',
@@ -50,20 +39,16 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 
-# fitting the model and predicting
+# fitting the model
 model.fit(X_train, y_train, epochs=epochs, callbacks=[tensorboard])
+
 y_pred = model.predict(X_test)
 
 y_test_class = np.argmax(y_test, axis=1)
 y_pred_class = np.argmax(y_pred, axis=1)
 
-print(classification_report(y_test_class, y_pred_class))
-print(confusion_matrix(y_test_class, y_pred_class))
+print(classification_report(y_true=y_test_class, y_pred=y_pred_class))
+print(confusion_matrix(y_true=y_test_class, y_pred=y_pred_class))
 
-# serialize model to JSON
-model_json = model.to_json()
-with open("model.json", "w") as json_file:
-    json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights("model.h5")
+model.save('model.model')
 print("Saved model to disk")

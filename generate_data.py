@@ -21,8 +21,7 @@ def create_training_data():
         class_num = categories.index(category)
         for img in os.listdir(path):
             try:
-                img_array = cv2.imread(os.path.join(
-                    path, img))
+                img_array = cv2.imread(os.path.join(path, img))
                 new_array = cv2.resize(img_array, (img_rows, img_cols))
                 training_data.append([new_array, class_num])
             except Exception as e:

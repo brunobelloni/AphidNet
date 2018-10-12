@@ -6,3 +6,4 @@ tests
 *.pickle
 *.h5
 *.json
+*.model

@@ -24,10 +24,10 @@ pickle_in = open("y.pickle", "rb")
 y = pickle.load(pickle_in)
 y = np.array(y)
 
-X_train, X_test, y_train, y_test = train_test_split(
+x_train, x_test, y_train, y_test = train_test_split(
     x, y, test_size=0.2, random_state=42)
 
-epochs = 10
+epochs = 100
 num_classes = 5
 img_shape = x.shape[1:]
 
@@ -92,20 +92,16 @@ model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
-# fitting the model and predicting
-model.fit(X_train, y_train, epochs=epochs, callbacks=[tensorboard])
-y_pred = model.predict(X_test)
+# fitting the model
+model.fit(x_train, y_train, epochs=epochs, callbacks=[tensorboard])
+
+y_pred = model.predict(x_test)
 
 y_test_class = np.argmax(y_test, axis=1)
 y_pred_class = np.argmax(y_pred, axis=1)
 
-print(classification_report(y_test_class, y_pred_class))
-print(confusion_matrix(y_test_class, y_pred_class))
+print(classification_report(y_true=y_test_class, y_pred=y_pred_class))
+print(confusion_matrix(y_true=y_test_class, y_pred=y_pred_class))
 
-# serialize model to JSON
-model_json = model.to_json()
-with open("model.json", "w") as json_file:
-    json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights("model.h5")
+model.save('model.model')
 print("Saved model to disk")
