@@ -22,7 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, Y, test_size=0.2, random_state=42)
 
 
-epochs = 1
+epochs = 20
 num_classes = 5
 img_shape = X.shape[1:]
 
@@ -97,3 +97,11 @@ y_pred_class = np.argmax(y_pred, axis=1)
 
 print(classification_report(y_test_class, y_pred_class))
 print(confusion_matrix(y_test_class, y_pred_class))
+
+# serialize model to JSON
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+model.save_weights("model.h5")
+print("Saved model to disk")
