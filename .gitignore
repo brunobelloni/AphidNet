@@ -1,3 +1,6 @@
 flower_photos
 __pycache__
 MNIST-data
+logs
+test.py
+iris.csv

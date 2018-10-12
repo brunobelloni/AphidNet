@@ -1,7 +1,8 @@
-import os
 import pickle
+import time
 
 import numpy as np
+from keras.callbacks import TensorBoard
 from keras.layers import (Activation, BatchNormalization, Conv2D, Dense,
                           Dropout, Flatten, MaxPooling2D, ZeroPadding2D)
 from keras.models import Sequential
@@ -10,17 +11,19 @@ from keras.utils.np_utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
+name = 'flower-cnn-{}'.format(int(time.time()))
+
+tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
+
 pickle_in = open("X.pickle", "rb")
 X = pickle.load(pickle_in)
 
 pickle_in = open("y.pickle", "rb")
 Y = pickle.load(pickle_in)
-
 Y = np.array(Y)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, Y, test_size=0.2, random_state=42)
-
 
 epochs = 20
 num_classes = 5
@@ -89,7 +92,7 @@ model.compile(optimizer='adam',
 
 
 # fitting the model and predicting
-model.fit(X_train, y_train, epochs=epochs)
+model.fit(X_train, y_train, epochs=epochs, callbacks=[tensorboard])
 y_pred = model.predict(X_test)
 
 y_test_class = np.argmax(y_test, axis=1)
