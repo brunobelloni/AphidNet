@@ -14,41 +14,37 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 name = 'flower-cnn-{}'.format(int(time.time()))
 tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
 
-pickle_in = open("X.pickle", "rb")
-X = pickle.load(pickle_in)
+pickle_data = open('data.pickle', 'rb')
+data = pickle.load(pickle_data)
+x, y = data[0], data[1]
 
-pickle_in = open("y.pickle", "rb")
-Y = pickle.load(pickle_in)
-Y = np.array(Y)
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, test_size=0.2, random_state=42)
+# X_train, X_test, y_train, y_test = train_test_split(
+#     X, Y, test_size=0.2, random_state=42)
 
 epochs = 20
 num_classes = 5
 img_shape = X.shape[1:]
 
-y_train = to_categorical(y_train, num_classes)
-y_test = to_categorical(y_test, num_classes)
+y = to_categorical(y, num_classes)
+# y_train = to_categorical(y_train, num_classes)
+# y_test = to_categorical(y_test, num_classes)
 
 model = load_model('model.model')
 print("Loaded model from disk")
 
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 # fitting the model
-model.fit(X_train, y_train, epochs=epochs, callbacks=[tensorboard])
+model.fit(X_train, y_train, epochs=epochs, validation_split=0.3, callbacks=[tensorboard])
 
-y_pred = model.predict(X_test)
+# y_pred = model.predict(X_test)
 
-y_test_class = np.argmax(y_test, axis=1)
-y_pred_class = np.argmax(y_pred, axis=1)
+# y_test_class = np.argmax(y_test, axis=1)
+# y_pred_class = np.argmax(y_pred, axis=1)
 
-print(classification_report(y_true=y_test_class, y_pred=y_pred_class))
-print(confusion_matrix(y_true=y_test_class, y_pred=y_pred_class))
+# print(classification_report(y_true=y_test_class, y_pred=y_pred_class))
+# print(confusion_matrix(y_true=y_test_class, y_pred=y_pred_class))
 
 model.save('model.model')
 print("Saved model to disk")

@@ -38,11 +38,10 @@ for features, label in training_data:
     y.append(label)
 
 x = np.array(x).reshape(-1, img_rows, img_cols, 3)
+y = np.array(y)
 
-pickle_out = open('x.pickle', 'wb')
-pickle.dump(x, pickle_out)
-pickle_out.close()
+data = [x, y]
 
-pickle_out = open('y.pickle', 'wb')
-pickle.dump(y, pickle_out)
-pickle_out.close()
+pickle_data = open('data.pickle', 'wb')
+pickle.dump(data, pickle_data)
+pickle_data.close()
