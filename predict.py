@@ -18,7 +18,6 @@ def prepare(filepath):
 
 model = load_model('model.model')
 
-
 dir = 'flower_photos/dandelion/7355522_b66e5d3078_m.jpg'
 prediction = model.predict([prepare(dir)])
 prediction = np.argmax(prediction)
