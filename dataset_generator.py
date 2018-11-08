@@ -40,9 +40,9 @@ class DatasetGenerator():
 
         """
         try:
-            for category in categories:
-                path = os.path.join(data_dir, category)
-                class_num = categories.index(category)
+            for category in self.categories:
+                path = os.path.join(self.path, category)
+                class_num = self.categories.index(category)
 
                 img_dir = os.listdir(path)
                 img_dir_len = len(img_dir)
@@ -52,7 +52,13 @@ class DatasetGenerator():
                         progressBar(category, img_dir.index(img), img_dir_len)
                         img_array = cv2.imread(os.path.join(path, img))
                         new_array = cv2.resize(img_array, (img_size, img_size))
-                        self.training_data.append([new_array, class_num])
+
+                        # DataAugmentation
+                        for angle in range(0, 361, 36):
+                            rotation_matrix = cv2.getRotationMatrix2D((img_size/2, img_size/2), angle, 1)
+                            img_rotation = cv2.warpAffine(new_array, rotation_matrix, (img_size, img_size))
+                            self.training_data.append([img_rotation, class_num])
+
                     except Exception as e:
                         print('Error', e)
                 print(' ')
@@ -74,11 +80,10 @@ class DatasetGenerator():
                 x.append(features)
                 y.append(label)
 
-            x = np.array(x).reshape(-1, self.img_size,
-                                    self.img_size, self.channels)
+            x = np.array(x).reshape(-1, self.img_size, self.img_size, self.channels)
             y = np.array(y)
             data = [x, y]
-
+            
             pickle_data = open(name + '.pickle', 'wb')
             pickle.dump(data, pickle_data)
             pickle_data.close()
@@ -95,10 +100,10 @@ class DatasetGenerator():
 
 
 def main():
-    categories = ['daisy', 'dandelion', 'roses', 'sunflowers', 'tulips']
-    data_dir = 'flower_photos/'
+    categories = ['alado', 'aptero', 'ninfa']
+    data_dir = 'aphid_dataset/'
 
-    dataset = DatasetGenerator(data_dir, categories)
+    dataset = DatasetGenerator(data_dir, categories, img_size=64)
     dataset.load_dataset()
     dataset.save()
     data = dataset.load()
