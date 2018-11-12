@@ -25,7 +25,6 @@ tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
 # Load Data
 dataset = DatasetGenerator()
 data = dataset.load()
-data /= 255
 x, y = data[0], data[1]
 
 # Split data in train and test
@@ -47,7 +46,7 @@ y_test = to_categorical(y_test, num_classes)
 
 if train_loaded:
     # Load existent Model
-    model = load_model(model_name + '.model')
+    model = load_model(model_name + '.h5')
     print("Loaded model from disk")
 else:
     # Initialize model
@@ -135,5 +134,5 @@ if cnf_matrix:
     plt.show()
 
 if save_model:
-    model.save(model_name + '.model')
+    model.save(model_name + '.h5')
     print("Saved model to disk")
