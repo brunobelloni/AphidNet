@@ -1,11 +1,11 @@
 
 import itertools
-
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn import datasets, svm
-from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+
+from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
@@ -57,15 +57,14 @@ def main():
     # Plot non-normalized confusion matrix
     plt.figure()
     plot_confusion_matrix(cnf_matrix, classes=class_names,
-                          title='Confusion matrix, without normalization')
+                        title='Confusion matrix, without normalization')
 
     # Plot normalized confusion matrix
     plt.figure()
     plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                          title='Normalized confusion matrix')
+                        title='Normalized confusion matrix')
 
     plt.show()
-
 
 if __name__ == '__main__':
     main()
