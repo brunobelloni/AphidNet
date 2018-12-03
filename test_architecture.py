@@ -1,20 +1,51 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Conv2D, MaxPooling2D
-# more info on callbakcs: https://keras.io/callbacks/ model saver is cool too.
-from keras.callbacks import TensorBoard
+import os
 import pickle
 import time
+
+from keras import optimizers
+from keras.callbacks import TensorBoard
+from keras.layers import (Activation, Conv2D, Dense, Dropout, Flatten,
+                          MaxPooling2D)
+from keras.models import Sequential
+from keras.preprocessing.image import ImageDataGenerator
+from keras.utils.np_utils import to_categorical
+from sklearn.model_selection import train_test_split
+
 from dataset_generator import DatasetGenerator
 
-# Load Data
-dataset = DatasetGenerator()
-data = dataset.load()
-x, y = data[0], data[1]
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-dense_layers = [0, 1, 2]
-layer_sizes = [32, 64, 128]
-conv_layers = [1, 2, 3]
+# Load Data
+categories = ['alados', 'apteros', 'ninfas']
+data_dir = 'dataset/'
+dataset = DatasetGenerator(data_dir, categories, img_size=128)
+x, y = dataset.get_data()
+
+x = x[:500]
+y = y[:500]
+
+num_classes = 3
+epochs = 10
+learning_rate = 0.0001
+batch_size = 32
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.10)
+
+aug = ImageDataGenerator(rotation_range=25,
+                         width_shift_range=0.1,
+                         height_shift_range=0.1,
+                         shear_range=0.2,
+                         zoom_range=0.2,
+                         horizontal_flip=True,
+                         fill_mode='nearest')
+
+# Categorical Conversion
+y_train = to_categorical(y_train, num_classes)
+y_test = to_categorical(y_test, num_classes)
+
+dense_layers = [1, 2]
+layer_sizes = [32, 64, 128, 256]
+conv_layers = [1, 2, 3, 4]
 
 for dense_layer in dense_layers:
     for layer_size in layer_sizes:
@@ -24,12 +55,12 @@ for dense_layer in dense_layers:
 
             model = Sequential()
 
-            model.add(Conv2D(layer_size, (3, 3), input_shape=x.shape[1:]))
+            model.add(Conv2D(layer_size, (2, 2), input_shape=x.shape[1:]))
             model.add(Activation('relu'))
             model.add(MaxPooling2D(pool_size=(2, 2)))
 
             for l in range(conv_layer-1):
-                model.add(Conv2D(layer_size, (3, 3)))
+                model.add(Conv2D(layer_size, (2, 2)))
                 model.add(Activation('relu'))
                 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -39,18 +70,13 @@ for dense_layer in dense_layers:
                 model.add(Dense(layer_size))
                 model.add(Activation('relu'))
 
-            model.add(Dense(1))
-            model.add(Activation('sigmoid'))
+            model.add(Dense(num_classes))
+            model.add(Activation('softmax'))
 
             tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
-
-            model.compile(loss='binary_crossentropy',
-                          optimizer='adam',
-                          metrics=['accuracy'],
-                          )
-
-            model.fit(x, y,
-                      batch_size=32,
-                      epochs=10,
-                      validation_split=0.3,
-                      callbacks=[tensorboard])
+            opt = optimizers.Adam(lr=learning_rate, decay=learning_rate / epochs)
+            model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+            model_fit = model.fit_generator(aug.flow(x_train, y_train, batch_size=batch_size),
+                                validation_data=(x_test, y_test),
+                                steps_per_epoch=len(x_train) // batch_size,
+                                epochs=epochs, verbose=1, callbacks=[tensorboard])
