@@ -11,25 +11,20 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils.np_utils import to_categorical
 from sklearn.model_selection import train_test_split
 
-from dataset_generator import DatasetGenerator
+from utils.dataset import DatasetGenerator
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Load Data
 categories = ['alados', 'apteros', 'ninfas']
 data_dir = 'dataset/'
-dataset = DatasetGenerator(data_dir, categories, img_size=128)
-x, y = dataset.get_data()
-
-x = x[:500]
-y = y[:500]
+dataset = DatasetGenerator(data_dir, categories, img_size=128, grayscale=True)
+x_train, x_test, y_train, y_test = dataset.get_data()
 
 num_classes = 3
-epochs = 10
-learning_rate = 0.0001
+epochs = 30
+learning_rate = 0.001
 batch_size = 32
-
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.10)
 
 aug = ImageDataGenerator(rotation_range=25,
                          width_shift_range=0.1,
@@ -39,13 +34,11 @@ aug = ImageDataGenerator(rotation_range=25,
                          horizontal_flip=True,
                          fill_mode='nearest')
 
-# Categorical Conversion
-y_train = to_categorical(y_train, num_classes)
-y_test = to_categorical(y_test, num_classes)
-
 dense_layers = [1, 2]
 layer_sizes = [32, 64, 128, 256]
-conv_layers = [1, 2, 3, 4]
+conv_layers = [4]
+
+print(x_train.shape[1:])
 
 for dense_layer in dense_layers:
     for layer_size in layer_sizes:
@@ -55,7 +48,7 @@ for dense_layer in dense_layers:
 
             model = Sequential()
 
-            model.add(Conv2D(layer_size, (2, 2), input_shape=x.shape[1:]))
+            model.add(Conv2D(layer_size, (2, 2), input_shape=x_train.shape[1:]))
             model.add(Activation('relu'))
             model.add(MaxPooling2D(pool_size=(2, 2)))
 
