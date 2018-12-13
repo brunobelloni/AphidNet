@@ -1,6 +1,6 @@
 # AphidNet
 
-AphidNet is a Convolutional Neural Network trained with the VGG16 architecture with the weights of the imagenet competition. The classifier achieved a validation accuracy of **97.33%** when predicting 3 life stages of a _Rhopalosiphum padi_: nymph, winged and winged.
+AphidNet is a Convolutional Neural Network trained with the VGG16 architecture with the weights of the imagenet competition. The classifier achieved a validation accuracy of **97.33%** when predicting 3 life stages of a _Rhopalosiphum padi_: nymph, wingless and winged.
 
 ## Getting Started
 
