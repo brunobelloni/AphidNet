@@ -16,6 +16,6 @@ For the training of Convolutional Neural Network we used the **Keras** framework
 
 ## References
 
-**[Tensorflow 1.7]**(https://www.tensorflow.org/)
-**[Python 3.6.6]**(https://www.python.org/)
-**[VGG16]**(https://arxiv.org/pdf/1409.1556.pdf)
+**[Tensorflow 1.7]**(https://www.tensorflow.org/)<br/>
+**[Python 3.6.6]**(https://www.python.org/)<br/>
+**[VGG16]**(https://arxiv.org/pdf/1409.1556.pdf)<br/>
