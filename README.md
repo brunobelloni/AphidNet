@@ -2,13 +2,9 @@
 
 AphidNet is a Convolutional Neural Network trained with the VGG16 architecture with the weights of the imagenet competition. The classifier achieved a validation accuracy of **97.33%** when predicting 3 life stages of a _Rhopalosiphum padi_: nymph, wingless and winged.
 
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Prerequisites
 
-For the training of Convolutional Neural Network we used the **Keras** framework with **Tensorflow** as background. To speed up processing we use a GTX 760 2GB GPU together with
+For the training of Convolutional Neural Network we used the **Keras** framework with **Tensorflow** as background. To speed up processing we use a GTX 760 2GB GPU.
 
 ## VGG16 Architecture
 
