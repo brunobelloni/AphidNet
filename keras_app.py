@@ -1,87 +1,435 @@
-from keras.applications.inception_v3 import InceptionV3
-from keras.preprocessing import image
-from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras import backend as K
-from keras.preprocessing.image import ImageDataGenerator
-from utils.dataset import DatasetGenerator
+import os
 
-# Load Data
-categories = ['alados', 'apteros', 'ninfas']
-data_dir = 'dataset/'
-dataset = DatasetGenerator(data_dir, categories, img_size=299, test_size=0.1)
-(x_train, x_test, y_train, y_test) = dataset.get_data()
+import keras
+import matplotlib.pyplot as plt
+import numpy as np
+from keras import layers, models, optimizers
+from keras.applications import VGG16
+from keras.preprocessing.image import ImageDataGenerator, load_img
 
-epochs = 10
-num_classes = 3
-batch_size = 32
-learning_rate = 0.0001
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# create the base pre-trained model
-base_model = InceptionV3(weights='imagenet', include_top=False)
+train_dir = './dataset/train'
+validation_dir = './dataset/validation'
+image_size = 128
 
-# add a global spatial average pooling layer
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-# let's add a fully-connected layer
-x = Dense(1024, activation='relu')(x)
-# and a logistic layer -- let's say we have 200 classes
-predictions = Dense(num_classes, activation='softmax')(x)
+parte1 = True
+parte2 = True
+parte3 = True
 
-# this is the model we will train
-model = Model(inputs=base_model.input, outputs=predictions)
+if parte1:
+    # Load the VGG model
+    vgg_conv = VGG16(weights='imagenet', include_top=False,
+                    input_shape=(image_size, image_size, 3))
+
+    # Freeze all the layers
+    for layer in vgg_conv.layers[:]:
+        layer.trainable = False
+
+    # Check the trainable status of the individual layers
+    for layer in vgg_conv.layers:
+        print(layer, layer.trainable)
+
+    # Create the model
+    model = models.Sequential()
+
+    # Add the vgg convolutional base model
+    model.add(vgg_conv)
+
+    # Add new layers
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024, activation='relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(3, activation='softmax'))
+
+    # Show a summary of the model. Check the number of trainable parameters
+    model.summary()
+
+    # No Data augmentation
+    train_datagen = ImageDataGenerator(rescale=1./255)
+    validation_datagen = ImageDataGenerator(rescale=1./255)
+
+    # Change the batchsize according to your system RAM
+    train_batchsize = 10
+    val_batchsize = 10
+
+    # Data Generator for Training data
+    train_generator = train_datagen.flow_from_directory(
+        train_dir,
+        target_size=(image_size, image_size),
+        batch_size=train_batchsize,
+        class_mode='categorical')
+
+    # Data Generator for Validation data
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Compile the model
+    model.compile(loss='categorical_crossentropy',
+                optimizer=optimizers.RMSprop(lr=1e-4),
+                metrics=['acc'])
+
+    # Train the Model
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=train_generator.samples/train_generator.batch_size,
+        epochs=20,
+        validation_data=validation_generator,
+        validation_steps=validation_generator.samples/validation_generator.batch_size,
+        verbose=1)
+
+    # Save the Model
+    model.save('all_freezed.h5')
+
+    # Plot the accuracy and loss curves
+    acc = history.history['acc']
+    val_acc = history.history['val_acc']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs = range(len(acc))
+
+    plt.plot(epochs, acc, 'b', label='Training acc')
+    plt.plot(epochs, val_acc, 'r', label='Validation acc')
+    plt.title('Training and validation accuracy')
+    plt.legend()
+
+    plt.figure()
+
+    plt.plot(epochs, loss, 'b', label='Training loss')
+    plt.plot(epochs, val_loss, 'r', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+
+    plt.show()
+
+    # Create a generator for prediction
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Get the filenames from the generator
+    fnames = validation_generator.filenames
+
+    # Get the ground truth from generator
+    ground_truth = validation_generator.classes
+
+    # Get the label to class mapping from the generator
+    label2index = validation_generator.class_indices
+
+    # Getting the mapping from class index to class label
+    idx2label = dict((v, k) for k, v in label2index.items())
+
+    # Get the predictions from the model using the generator
+    predictions = model.predict_generator(
+        validation_generator, steps=validation_generator.samples/validation_generator.batch_size, verbose=1)
+    predicted_classes = np.argmax(predictions, axis=1)
+
+    errors = np.where(predicted_classes != ground_truth)[0]
+    print("No of errors = {}/{}".format(len(errors), validation_generator.samples))
+
+    # Show the errors
+    for i in range(len(errors)):
+        pred_class = np.argmax(predictions[errors[i]])
+        pred_label = idx2label[pred_class]
+
+        title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
+            fnames[errors[i]].split('/')[0],
+            pred_label,
+            predictions[errors[i]][pred_class])
+
+        original = load_img('{}/{}'.format(validation_dir, fnames[errors[i]]))
+        plt.figure(figsize=[7, 7])
+        plt.axis('off')
+        plt.title(title)
+        plt.imshow(original)
+        plt.show()
 
 
-aug = ImageDataGenerator(
-    rotation_range=25,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='nearest',
-    )
+if parte2:
+    # Load the VGG model
+    vgg_conv = VGG16(weights='imagenet', include_top=False,
+                    input_shape=(image_size, image_size, 3))
 
-# first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional InceptionV3 layers
-for layer in base_model.layers:
-    layer.trainable = False
+    # Freeze all the layers
+    for layer in vgg_conv.layers[:-4]:
+        layer.trainable = False
 
-# compile the model (should be done *after* setting layers to non-trainable)
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
+    # Check the trainable status of the individual layers
+    for layer in vgg_conv.layers:
+        print(layer, layer.trainable)
 
-# train the model on the new data for a few epochs
-model_fit = model.fit_generator(aug.flow(x_train, y_train,
-                                batch_size=batch_size),
-                                validation_data=(x_test, y_test),
-                                steps_per_epoch=len(x_train)
-                                // batch_size, epochs=epochs)
+    # Create the model
+    model = models.Sequential()
 
-# at this point, the top layers are well trained and we can start fine-tuning
-# convolutional layers from inception V3. We will freeze the bottom N layers
-# and train the remaining top layers.
+    # Add the vgg convolutional base model
+    model.add(vgg_conv)
 
-# let's visualize layer names and layer indices to see how many layers
-# we should freeze:
-for i, layer in enumerate(base_model.layers):
-   print(i, layer.name)
+    # Add new layers
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024, activation='relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(3, activation='softmax'))
 
-# we chose to train the top 2 inception blocks, i.e. we will freeze
-# the first 249 layers and unfreeze the rest:
-for layer in model.layers[:249]:
-   layer.trainable = False
-for layer in model.layers[249:]:
-   layer.trainable = True
+    # Show a summary of the model. Check the number of trainable parameters
+    model.summary()
 
-# we need to recompile the model for these modifications to take effect
-# we use SGD with a low learning rate
-from keras.optimizers import SGD
-model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy')
+    # No Data augmentation
+    train_datagen = ImageDataGenerator(rescale=1./255)
+    validation_datagen = ImageDataGenerator(rescale=1./255)
 
-# we train our model again (this time fine-tuning the top 2 inception blocks
-# alongside the top Dense layers
-model_fit = model.fit_generator(aug.flow(x_train, y_train,
-                                batch_size=batch_size),
-                                validation_data=(x_test, y_test),
-                                steps_per_epoch=len(x_train)
-                                // batch_size, epochs=epochs)
+    # Change the batchsize according to your system RAM
+    train_batchsize = 10
+    val_batchsize = 10
+
+    # Data Generator for Training data
+    train_generator = train_datagen.flow_from_directory(
+        train_dir,
+        target_size=(image_size, image_size),
+        batch_size=train_batchsize,
+        class_mode='categorical')
+
+    # Data Generator for Validation data
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Compile the model
+    model.compile(loss='categorical_crossentropy',
+                optimizer=optimizers.RMSprop(lr=1e-4),
+                metrics=['acc'])
+
+    # Train the Model
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=train_generator.samples/train_generator.batch_size,
+        epochs=20,
+        validation_data=validation_generator,
+        validation_steps=validation_generator.samples/validation_generator.batch_size,
+        verbose=1)
+
+    # Save the Model
+    model.save('last4_layers.h5')
+
+    # Plot the accuracy and loss curves
+    acc = history.history['acc']
+    val_acc = history.history['val_acc']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs = range(len(acc))
+
+    plt.plot(epochs, acc, 'b', label='Training acc')
+    plt.plot(epochs, val_acc, 'r', label='Validation acc')
+    plt.title('Training and validation accuracy')
+    plt.legend()
+
+    plt.figure()
+
+    plt.plot(epochs, loss, 'b', label='Training loss')
+    plt.plot(epochs, val_loss, 'r', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+
+    plt.show()
+
+
+    # Create a generator for prediction
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Get the filenames from the generator
+    fnames = validation_generator.filenames
+
+    # Get the ground truth from generator
+    ground_truth = validation_generator.classes
+
+    # Get the label to class mapping from the generator
+    label2index = validation_generator.class_indices
+
+    # Getting the mapping from class index to class label
+    idx2label = dict((v, k) for k, v in label2index.items())
+
+    # Get the predictions from the model using the generator
+    predictions = model.predict_generator(
+        validation_generator, steps=validation_generator.samples/validation_generator.batch_size, verbose=1)
+    predicted_classes = np.argmax(predictions, axis=1)
+
+    errors = np.where(predicted_classes != ground_truth)[0]
+    print("No of errors = {}/{}".format(len(errors), validation_generator.samples))
+
+    # Show the errors
+    for i in range(len(errors)):
+        pred_class = np.argmax(predictions[errors[i]])
+        pred_label = idx2label[pred_class]
+
+        title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
+            fnames[errors[i]].split('/')[0],
+            pred_label,
+            predictions[errors[i]][pred_class])
+
+        original = load_img('{}/{}'.format(validation_dir, fnames[errors[i]]))
+        plt.figure(figsize=[7, 7])
+        plt.axis('off')
+        plt.title(title)
+        plt.imshow(original)
+        plt.show()
+
+
+if parte3:
+    # Load the VGG model
+    vgg_conv = VGG16(weights='imagenet', include_top=False,
+                    input_shape=(image_size, image_size, 3))
+
+    # Freeze all the layers
+    for layer in vgg_conv.layers[:-4]:
+        layer.trainable = False
+
+    # Check the trainable status of the individual layers
+    for layer in vgg_conv.layers:
+        print(layer, layer.trainable)
+
+    # Create the model
+    model = models.Sequential()
+
+    # Add the vgg convolutional base model
+    model.add(vgg_conv)
+
+    # Add new layers
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024, activation='relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(3, activation='softmax'))
+
+    # Show a summary of the model. Check the number of trainable parameters
+    model.summary()
+
+
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        rotation_range=20,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        horizontal_flip=True,
+        fill_mode='nearest')
+
+    validation_datagen = ImageDataGenerator(rescale=1./255)
+
+    # Change the batchsize according to your system RAM
+    train_batchsize = 10
+    val_batchsize = 10
+
+    # Data Generator for Training data
+    train_generator = train_datagen.flow_from_directory(
+        train_dir,
+        target_size=(image_size, image_size),
+        batch_size=train_batchsize,
+        class_mode='categorical')
+
+    # Data Generator for Validation data
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Compile the model
+    model.compile(loss='categorical_crossentropy',
+                optimizer=optimizers.RMSprop(lr=1e-4),
+                metrics=['acc'])
+
+    # Train the Model
+    # NOTE that we have multiplied the steps_per_epoch by 2. This is because we are using data augmentation.
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=2*train_generator.samples/train_generator.batch_size,
+        epochs=20,
+        validation_data=validation_generator,
+        validation_steps=validation_generator.samples/validation_generator.batch_size,
+        verbose=1)
+
+    # Save the Model
+    model.save('da_last4_layers.h5')
+
+    # Plot the accuracy and loss curves
+    acc = history.history['acc']
+    val_acc = history.history['val_acc']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs = range(len(acc))
+
+    plt.plot(epochs, acc, 'b', label='Training acc')
+    plt.plot(epochs, val_acc, 'r', label='Validation acc')
+    plt.title('Training and validation accuracy')
+    plt.legend()
+
+    plt.figure()
+
+    plt.plot(epochs, loss, 'b', label='Training loss')
+    plt.plot(epochs, val_loss, 'r', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+
+    plt.show()
+
+
+    # Create a generator for prediction
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(image_size, image_size),
+        batch_size=val_batchsize,
+        class_mode='categorical',
+        shuffle=False)
+
+    # Get the filenames from the generator
+    fnames = validation_generator.filenames
+
+    # Get the ground truth from generator
+    ground_truth = validation_generator.classes
+
+    # Get the label to class mapping from the generator
+    label2index = validation_generator.class_indices
+
+    # Getting the mapping from class index to class label
+    idx2label = dict((v, k) for k, v in label2index.items())
+
+    # Get the predictions from the model using the generator
+    predictions = model.predict_generator(
+        validation_generator, steps=validation_generator.samples/validation_generator.batch_size, verbose=1)
+    predicted_classes = np.argmax(predictions, axis=1)
+
+    errors = np.where(predicted_classes != ground_truth)[0]
+    print("No of errors = {}/{}".format(len(errors), validation_generator.samples))
+
+    # Show the errors
+    for i in range(len(errors)):
+        pred_class = np.argmax(predictions[errors[i]])
+        pred_label = idx2label[pred_class]
+
+        title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
+            fnames[errors[i]].split('/')[0],
+            pred_label,
+            predictions[errors[i]][pred_class])
+
+        original = load_img('{}/{}'.format(validation_dir, fnames[errors[i]]))
+        plt.figure(figsize=[7, 7])
+        plt.axis('off')
+        plt.title(title)
+        plt.imshow(original)
+        plt.show()

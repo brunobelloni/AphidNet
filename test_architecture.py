@@ -43,12 +43,14 @@ print(x_train.shape[1:])
 for dense_layer in dense_layers:
     for layer_size in layer_sizes:
         for conv_layer in conv_layers:
-            NAME = "{}-conv-{}-nodes-{}-dense-{}".format(conv_layer, layer_size, dense_layer, int(time.time()))
+            NAME = "{}-conv-{}-nodes-{}-dense-{}".format(
+                conv_layer, layer_size, dense_layer, int(time.time()))
             print(NAME)
 
             model = Sequential()
 
-            model.add(Conv2D(layer_size, (2, 2), input_shape=x_train.shape[1:]))
+            model.add(Conv2D(layer_size, (2, 2),
+                             input_shape=x_train.shape[1:]))
             model.add(Activation('relu'))
             model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -67,9 +69,12 @@ for dense_layer in dense_layers:
             model.add(Activation('softmax'))
 
             tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
-            opt = optimizers.Adam(lr=learning_rate, decay=learning_rate / epochs)
-            model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+            opt = optimizers.Adam(
+                lr=learning_rate, decay=learning_rate / epochs)
+            model.compile(loss='categorical_crossentropy',
+                          optimizer=opt, metrics=['accuracy'])
             model_fit = model.fit_generator(aug.flow(x_train, y_train, batch_size=batch_size),
-                                validation_data=(x_test, y_test),
-                                steps_per_epoch=len(x_train) // batch_size,
-                                epochs=epochs, verbose=1, callbacks=[tensorboard])
+                                            validation_data=(x_test, y_test),
+                                            steps_per_epoch=len(
+                                                x_train) // batch_size,
+                                            epochs=epochs, verbose=1, callbacks=[tensorboard])

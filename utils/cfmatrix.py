@@ -57,14 +57,15 @@ def main():
     # Plot non-normalized confusion matrix
     plt.figure()
     plot_confusion_matrix(cnf_matrix, classes=class_names,
-                        title='Confusion matrix, without normalization')
+                          title='Confusion matrix, without normalization')
 
     # Plot normalized confusion matrix
     plt.figure()
     plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                        title='Normalized confusion matrix')
+                          title='Normalized confusion matrix')
 
     plt.show()
+
 
 if __name__ == '__main__':
     main()

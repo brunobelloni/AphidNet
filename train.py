@@ -47,14 +47,14 @@ aug = ImageDataGenerator(
     zoom_range=0.2,
     horizontal_flip=True,
     fill_mode='nearest',
-    )
+)
 
 # Fitting the model
 opt = optimizers.Adam(lr=learning_rate, decay=learning_rate / epochs)
 model.compile(loss='categorical_crossentropy', optimizer=opt,
               metrics=['accuracy'])
 model_fit = model.fit_generator(aug.flow(x_train, y_train,
-                                batch_size=batch_size),
+                                         batch_size=batch_size),
                                 validation_data=(x_test, y_test),
                                 steps_per_epoch=len(x_train)
                                 // batch_size, epochs=epochs,

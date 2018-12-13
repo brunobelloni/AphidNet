@@ -22,7 +22,8 @@ class AphidNet:
             chanDim = 1
 
         # 1st Convolutional Layer
-        model.add(Conv2D(filters=32, input_shape=inputShape, kernel_size=(3, 3), padding='valid'))
+        model.add(Conv2D(filters=32, input_shape=inputShape,
+                         kernel_size=(3, 3), padding='valid'))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2), padding='valid'))
         model.add(BatchNormalization(axis=chanDim))

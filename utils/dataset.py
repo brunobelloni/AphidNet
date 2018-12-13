@@ -20,6 +20,7 @@ class DatasetGenerator():
     |--- Class-N
 
     """
+
     def __init__(self, path=None, categories=None, img_size=64, grayscale=False, test_size=0.2):
         self.path = path
         self.categories = categories
@@ -42,10 +43,12 @@ class DatasetGenerator():
                     try:
                         ProgressBar(category, img_dir.index(img), img_dir_len)
                         img_array = cv2.imread(os.path.join(_path, img))
-                        img_array = cv2.resize(img_array, (self.img_size, self.img_size))
-                        
+                        img_array = cv2.resize(
+                            img_array, (self.img_size, self.img_size))
+
                         if self.grayscale:
-                            img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+                            img_array = cv2.cvtColor(
+                                img_array, cv2.COLOR_BGR2GRAY)
 
                         img_array = img_to_array(img_array)
                         self.training_data.append([img_array, class_num])
@@ -63,14 +66,15 @@ class DatasetGenerator():
     def get_data(self):
         x, y = [], []
         for features, label in self.training_data:
-                x.append(features)
-                y.append(label)
+            x.append(features)
+            y.append(label)
 
-
-        x_train, x_test, y_train, y_test = train_test_split(np.array(x), np.array(y), test_size=self.test_size)
+        x_train, x_test, y_train, y_test = train_test_split(
+            np.array(x), np.array(y), test_size=self.test_size)
         y_train = to_categorical(y_train, len(self.categories))
         y_test = to_categorical(y_test, len(self.categories))
         return x_train, x_test, y_train, y_test
+
 
 def main():
     categories = ['alados', 'apteros', 'ninfas']
