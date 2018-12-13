@@ -12,7 +12,7 @@ For the training of Convolutional Neural Network we used the **Keras** framework
 
 ## VGG16 Architecture
 
-![alt text](https://github.com/brunobelloni/aphid-net/blob/master/resources/readme/vgg16.png)
+![alt text](https://github.com/brunobelloni/aphid-net/blob/master/readme/vgg16.png)
 
 ## References
 
