@@ -12,7 +12,7 @@ For the training of Convolutional Neural Network we used the **Keras** framework
 
 ## Results
 
-![alt text](https://github.com/brunobelloni/aphid-net/blob/master/readme/result.png)
+![alt text](https://github.com/brunobelloni/aphid-net/blob/master/readme/results.png)
 
 ## References
 
